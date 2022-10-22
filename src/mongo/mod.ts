@@ -8,6 +8,7 @@ export {
   IpAddressModel,
   LogsModel,
   NetworkTypesModel,
+  UsbKeyModel,
   UsersModel,
 } from "./connect.ts";
 
@@ -47,3 +48,9 @@ export {
   type DepartmentSchema,
 } from "./staff/departments.ts";
 export { USERS_COLLECTION_NAME, type UserSchema } from "./staff/users.ts";
+
+export {
+  USB_KEYS_COLLECTION_NAME,
+  type UsbKeysSchema,
+  usbKeysSchemaMap,
+} from "./device/usb_keys.ts";

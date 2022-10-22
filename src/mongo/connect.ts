@@ -13,6 +13,8 @@ import {
   MongoClient,
   NETWORK_TYPES_COLLECTION_NAME,
   NetworkTypeSchema,
+  USB_KEYS_COLLECTION_NAME,
+  UsbKeysSchema,
   USERS_COLLECTION_NAME,
   UserSchema,
 } from "mongo";
@@ -48,7 +50,12 @@ export const IpAddressModel = db.collection<IpAddressSchema>(
   IP_ADDRESS_COLLECTION_NAME,
 );
 
-//
+//部门集合
 export const DepartmentModel = db.collection<DepartmentSchema>(
   DEPARTMENT_COLLECTION_NAME,
+);
+
+// 数字证书集合
+export const UsbKeyModel = db.collection<UsbKeysSchema>(
+  USB_KEYS_COLLECTION_NAME,
 );

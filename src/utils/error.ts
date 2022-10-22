@@ -28,6 +28,14 @@ export const ErrCode: ErrCodeType = {
     errcode: 501,
     errmsg: "修改用户信息失败",
   },
+  USER_CREATE_ERROR: {
+    errcode: 503,
+    errmsg: `创建用户失败`,
+  },
+  USER_UPDATE_ERROR: {
+    errcode: 504,
+    errmsg: `更新用户失败`,
+  },
   USER_DELETE_ERROR: {
     errcode: 502,
     errmsg: "删除用户失败",
@@ -64,9 +72,25 @@ export const ErrCode: ErrCodeType = {
     errcode: 705,
     errmsg: "IP地址重复!",
   },
+  IP_UPDATE_ERROR: {
+    errcode: 706,
+    errmsg: "更新IP地址信息失败",
+  },
   REPEAT_DEPARTMENT: {
     errcode: 801,
     errmsg: `部门名称已经存在`,
+  },
+  DEPARTMENT_CREATE_ERROR: {
+    errcode: 803,
+    errmsg: `部门创建失败`,
+  },
+  DEPARTMENT_DELETE_ERROR: {
+    errcode: 804,
+    errmsg: `部门删除失败`,
+  },
+  DEPARTMENT_UPDATE_ERROR: {
+    errcode: 805,
+    errmsg: `部门更新失败`,
   },
   REPEAT: {
     errcode: 801,
@@ -75,6 +99,22 @@ export const ErrCode: ErrCodeType = {
   UPDATE_ERROR: {
     errcode: 802,
     errmsg: `更新失败,请重试!`,
+  },
+  USB_KEY_REPEAT: {
+    errcode: 901,
+    errmsg: `数字证书重复`,
+  },
+  USB_KEY_CREATE_ERROR: {
+    errcode: 902,
+    errmsg: `数字证书创建失败`,
+  },
+  USB_KEY_DELETE_ERROR: {
+    errcode: 903,
+    errmsg: `数字证书删除失败`,
+  },
+  USB_KEY_UPDATE_ERROR: {
+    errcode: 904,
+    errmsg: `数字证书更新失败`,
   },
 };
 // 缺失参数

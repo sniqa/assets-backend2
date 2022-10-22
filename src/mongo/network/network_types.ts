@@ -4,7 +4,7 @@ export const NETWORK_TYPES_COLLECTION_NAME = "network_types";
 
 export interface NetworkTypeSchema {
   _id: ObjectId;
-  network_name: string;
+  network_type_name: string;
   ip_address_start: string;
   ip_address_end: string;
   netmask: string;
@@ -13,5 +13,5 @@ export interface NetworkTypeSchema {
   used_number: number;
   unused_number: number;
   total_number: number;
-  desript: string;
+  remark: string;
 }

@@ -1,6 +1,7 @@
 import {
   IpAddressSchema,
   LOGS_EVENT,
+  LogSchema,
   NetworkTypeSchema,
   NetworkTypesModel,
 } from "mongo";
@@ -46,7 +47,7 @@ const generateNetworkTypeInfo = (
     { length: ipNumber },
     (_, i) => ({
       ip_address: ipFromLong(ipAddressStartLong + i),
-      network_type: data.network_name || "",
+      network_type: data.network_type_name || "",
       is_used: false,
       enable_time: current_time,
     }),
@@ -94,7 +95,7 @@ export const create_network_type = async (
 
   // 是否重复的网络类型
   const reaptNetType = await NetworkTypesModel.findOne({
-    network_name: data.network_name,
+    network_name: data.network_type_name,
   });
 
   if (reaptNetType) {
@@ -116,22 +117,23 @@ export const create_network_type = async (
     networkTypeInfo as NetworkTypeSchema,
   );
 
+  const log: Partial<LogSchema> = {
+    who: client.addr.hostname,
+    for_who: data.network_type_name,
+    event: LOGS_EVENT.CREATE,
+    message: `创建网络类型: ${data.network_type_name}`,
+  };
+
   return res
     ? (successRes({ _id: res, ...networkTypeInfo }),
       create_log({
-        who: client.addr.hostname,
-        for_who: data.network_name,
+        ...log,
         state: true,
-        event: LOGS_EVENT.CREATE,
-        message: `创建网络类型: ${data.network_name}`,
       }))
     : (faildRes(ErrCode.INSERT_NETWORK_TYPE_ERROR),
       create_log({
-        who: client.addr.hostname,
-        for_who: data.network_name,
+        ...log,
         state: false,
-        event: LOGS_EVENT.CREATE,
-        message: `创建网络类型: ${data.network_name}`,
       }));
 };
 
@@ -160,29 +162,40 @@ export const delete_network_type = async (
   client: ClientConfig,
   data: Partial<NetworkTypeSchema>,
 ) => {
-  idToObjectId(data);
+  if (!hasKeys(data, "network_type_name")) {
+    return faildRes(ErrCode.MISSING_PARAMETER);
+  }
+
+  const objectIdQuery = idToObjectId(data);
 
   // 删除ip
   const result = await IpAddressModel.deleteMany({
-    network_type: data.network_name,
+    network_type: objectIdQuery.network_name,
   });
 
   // 将已分配的ip进行清空
   const r = await DevicesModel.updateMany(
-    { network_type: data.network_name },
+    { network_type: objectIdQuery.network_name },
     {
       $set: { network_type: "", ip_address: "" },
     },
   );
 
   // 删除网络类型
-  const res = await NetworkTypesModel.deleteOne(data);
+  const res = await NetworkTypesModel.deleteOne(objectIdQuery);
+
+  const log: Partial<LogSchema> = {
+    who: client.addr.hostname,
+    for_who: data.network_type_name || "",
+    event: LOGS_EVENT.DELETE,
+    message: `删除网络类型: ${data.network_type_name || ""}`,
+  };
 
   return res > 0
-    ? (successRes(res),
-      create_log({
-        who: client.addr.hostname,
-        for_who: "",
-      }))
-    : (faildRes(ErrCode.DELETE_NETWORK_TYPE_ERROR), create_log({}));
+    ? (successRes(res), create_log({ ...log, state: true }))
+    : (faildRes(ErrCode.DELETE_NETWORK_TYPE_ERROR),
+      create_log({ ...log, state: false }));
 };
+
+// 更新网络类型信息
+// export const modify_network_type = async () => {}

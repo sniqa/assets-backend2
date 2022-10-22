@@ -1,5 +1,5 @@
 import { Collection } from "mongo";
-import { ErrCode, faildRes, hasKeys, REPEAT, successRes } from "utils";
+import { ErrCode, faildRes, hasKeys, successRes } from "utils";
 
 interface CreateInfo<T> {
   collection: Collection<T>;
@@ -18,7 +18,7 @@ export const create = async <T>(info: CreateInfo<T>) => {
   const repeat = await collection.findOne(query);
 
   if (repeat) {
-    return faildRes(REPEAT);
+    return faildRes(ErrCode.REPEAT);
   }
 
   const res = await collection.insertOne(query as Omit<T, "_id">);

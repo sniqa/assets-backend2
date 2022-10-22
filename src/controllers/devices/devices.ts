@@ -1,22 +1,26 @@
 import { find } from "curd";
 import {
   DeviceSchema,
+  deviceSchemaMap,
   DevicesModel,
   IpAddressModel,
+  LogSchema,
   NetworkTypesModel,
+  ObjectId,
 } from "mongo";
 import {
   ErrCode,
   faildRes,
   hasKeys,
   idToObjectId,
-  IP_REPEAT,
   ipIsV4Format,
   macIsFormat,
   macToFormatMac,
   successRes,
+  whereWasChanged,
 } from "utils";
 import { create_log, LOGS_EVENT } from "controllers/log/log.ts";
+import { modify_ip } from "controllers/network/ip_address.ts";
 import { ClientConfig } from "ws";
 
 // create
@@ -48,22 +52,29 @@ export const create_device = async (
     const isReapt = await DevicesModel.findOne({ ip_address: info.ip_address });
 
     if (isReapt) {
-      return faildRes(IP_REPEAT);
+      return faildRes(ErrCode.IP_REPEAT);
     }
   }
 
   if (info.ip_address && info.network_type) {
-    const res = await IpAddressModel.findAndModify(
-      {
-        network_type: info.network_type,
-        ip_address: info.ip_address,
-      },
-      {
-        update: {
-          $set: { is_used: true, username: info.user },
-        },
-      },
-    );
+    // const res = await IpAddressModel.findAndModify(
+    //   {
+    //     network_type: info.network_type,
+    //     ip_address: info.ip_address,
+    //   },
+    //   {
+    //     update: {
+    //       $set: { is_used: true, username: info.user },
+    //     },
+    //   },
+    // );
+
+    await modify_ip(client, {
+      network_type: info.network_type,
+      ip_address: info.ip_address,
+      is_used: true,
+      username: info.user,
+    });
 
     const result = await NetworkTypesModel.findAndModify(
       {
@@ -119,17 +130,23 @@ export const delete_device = async (
 
   // 回收Ip，删去使用人
   if (data.ip_address && data.network_type) {
-    const res = await IpAddressModel.findAndModify(
-      {
-        network_type: data.network_type,
-        ip_address: data.ip_address,
-      },
-      {
-        update: {
-          $set: { is_used: false, username: "" },
-        },
-      },
-    );
+    await modify_ip(client, {
+      network_type: data.network_type,
+      ip_address: data.ip_address,
+      is_used: false,
+      username: "",
+    });
+    // const res = await IpAddressModel.findAndModify(
+    //   {
+    //     network_type: data.network_type,
+    //     ip_address: data.ip_address,
+    //   },
+    //   {
+    //     update: {
+    //       $set: { is_used: false, username: "" },
+    //     },
+    //   },
+    // );
 
     // 更新网络类型
     const result = await NetworkTypesModel.findAndModify(
@@ -153,9 +170,7 @@ export const delete_device = async (
     );
   }
 
-  idToObjectId(data);
-
-  const res = await DevicesModel.deleteOne({ _id: data._id });
+  const res = await DevicesModel.deleteOne({ _id: new ObjectId(data._id) });
 
   return successRes(res);
 };
@@ -169,10 +184,10 @@ export const modify_device = async (
     return faildRes(ErrCode.MISSING_PARAMETER);
   }
 
-  idToObjectId(data);
+  const objectIdId = new ObjectId(data._id);
 
   // 原始设备数据
-  const origin = await DevicesModel.findOne({ _id: data._id });
+  const origin = await DevicesModel.findOne({ _id: objectIdId });
 
   // 判断mac是否发生变化及mac是否重复
   if (data.mac) {
@@ -183,110 +198,216 @@ export const modify_device = async (
     }
   }
 
-  //判断网络类型和ip是否发送变化
-  if (data.network_type) {
-    // 仅仅是变换Ip
-    if (data.network_type === origin?.network_type) {
+  if (data.network_type === origin?.network_type) {
+    // 网络类型未变化
+    if (data.ip_address != origin?.ip_address) {
       // 取消原有的ip及使用人占用
-      const res = await IpAddressModel.findAndModify(
-        {
-          network_type: origin?.network_type,
-          ip_address: origin?.ip_address,
-        },
-        {
-          update: {
-            $set: { is_used: false, username: "" },
-          },
-        },
-      );
+      await modify_ip(client, {
+        network_type: origin?.network_type || "",
+        ip_address: origin?.ip_address || "",
+        is_used: false,
+        username: "",
+      });
 
       // 更新现有的ip及使用人
-      const result = await IpAddressModel.findAndModify(
-        {
-          network_type: data?.network_type,
-          ip_address: data?.ip_address,
-        },
-        {
-          update: {
-            $set: { is_used: true, username: data.user },
-          },
-        },
-      );
-    } else {
-      // 网络类型及Ip都改变
-
-      // 取消原有的ip及使用人占用
-      const res = await IpAddressModel.findAndModify(
-        {
-          network_type: origin?.network_type,
-          ip_address: origin?.ip_address,
-        },
-        {
-          update: {
-            $set: { is_used: false, username: "" },
-          },
-        },
-      );
-
-      // 更新现有的ip及使用人
-      const result = await IpAddressModel.findAndModify(
-        {
-          network_type: data?.network_type,
-          ip_address: data?.ip_address,
-        },
-        {
-          update: {
-            $set: { is_used: true, username: data.user },
-          },
-        },
-      );
+      await modify_ip(client, {
+        network_type: data?.network_type || "",
+        ip_address: data?.ip_address || "",
+        is_used: true,
+        username: data.user,
+      });
     }
+  } else {
+    // 网络类型发生变化
+    const res1 = await NetworkTypesModel.findAndModify(
+      {
+        network_name: origin?.network_type,
+      },
+      {
+        update: {
+          $set: {
+            unused_number: await IpAddressModel.countDocuments({
+              network_type: origin?.network_type,
+              is_used: false,
+            }),
+            used_number: await IpAddressModel.countDocuments({
+              network_type: origin?.network_type,
+              is_used: true,
+            }),
+          },
+        },
+      },
+    );
+
+    // 更新现有的网络类型数据
+    const res2 = await NetworkTypesModel.findAndModify(
+      {
+        network_name: data.network_type,
+      },
+      {
+        update: {
+          $set: {
+            unused_number: await IpAddressModel.countDocuments({
+              network_type: data.network_type,
+              is_used: false,
+            }),
+            used_number: await IpAddressModel.countDocuments({
+              network_type: data.network_type,
+              is_used: true,
+            }),
+          },
+        },
+      },
+    );
+
+    // 取消原有的ip及使用人占用
+    await modify_ip(client, {
+      network_type: origin?.network_type || "",
+      ip_address: origin?.ip_address || "",
+      is_used: false,
+      username: "",
+    });
+
+    // 更新现有的ip及使用人
+    await modify_ip(client, {
+      network_type: data?.network_type || "",
+      ip_address: data?.ip_address || "",
+      is_used: true,
+      username: data.user,
+    });
   }
 
-  // 更新旧有网络类型数据
-  const res1 = await NetworkTypesModel.findAndModify(
-    {
-      network_name: origin?.network_type,
-    },
-    {
-      update: {
-        $set: {
-          unused_number: await IpAddressModel.countDocuments({
-            network_type: origin?.network_type,
-            is_used: false,
-          }),
-          used_number: await IpAddressModel.countDocuments({
-            network_type: origin?.network_type,
-            is_used: true,
-          }),
-        },
-      },
-    },
-  );
+  // //判断网络类型和ip是否发送变化
+  // if (data.network_type) {
+  //   // 仅仅是变换Ip
+  //   if (data.network_type === origin?.network_type) {
+  //     // 取消原有的ip及使用人占用
+  //     // const res = await IpAddressModel.findAndModify(
+  //     //   {
+  //     //     network_type: origin?.network_type,
+  //     //     ip_address: origin?.ip_address,
+  //     //   },
+  //     //   {
+  //     //     update: {
+  //     //       $set: { is_used: false, username: "" },
+  //     //     },
+  //     //   },
+  //     // );
 
-  // 更新现有的网络类型数据
-  const res2 = await NetworkTypesModel.findAndModify(
-    {
-      network_name: data.network_type,
-    },
-    {
-      update: {
-        $set: {
-          unused_number: await IpAddressModel.countDocuments({
-            network_type: data.network_type,
-            is_used: false,
-          }),
-          used_number: await IpAddressModel.countDocuments({
-            network_type: data.network_type,
-            is_used: true,
-          }),
-        },
-      },
-    },
-  );
+  //     await modify_ip(client, {
+  //       network_type: origin?.network_type || '',
+  //       ip_address: origin?.ip_address || '',
+  //       is_used: false,
+  //       username: "",
+  //     });
+
+  //     // 更新现有的ip及使用人
+  //     await modify_ip(client, {
+  //       network_type: data?.network_type || '',
+  //       ip_address: data?.ip_address || '',
+  //       is_used: true,
+  //       username: data.user,
+  //     });
+  //     // const result = await IpAddressModel.findAndModify(
+  //     //   {
+  //     //     network_type: data?.network_type,
+  //     //     ip_address: data?.ip_address,
+  //     //   },
+  //     //   {
+  //     //     update: {
+  //     //       $set: { is_used: true, username: data.user },
+  //     //     },
+  //     //   },
+  //     // );
+  //   } else {
+  //     // 网络类型及Ip都改变
+
+  //     // 取消原有的ip及使用人占用
+  //     // const res = await IpAddressModel.findAndModify(
+  //     //   {
+  //     //     network_type: origin?.network_type,
+  //     //     ip_address: origin?.ip_address,
+  //     //   },
+  //     //   {
+  //     //     update: {
+  //     //       $set: { is_used: false, username: "" },
+  //     //     },
+  //     //   },
+  //     // );
+
+  //     await modify_ip(client, {
+  //       network_type: origin?.network_type || '',
+  //       ip_address: origin?.ip_address || '',
+  //       is_used: false,
+  //       username: "",
+  //     });
+
+  //     // 更新现有的ip及使用人
+  //     await modify_ip(client, {
+  //       network_type: data?.network_type || '',
+  //       ip_address: data?.ip_address || '',
+  //       is_used: true,
+  //       username: data.user,
+  //     });
+
+  //     // const result = await IpAddressModel.findAndModify(
+  //     //   {
+  //     //     network_type: data?.network_type,
+  //     //     ip_address: data?.ip_address,
+  //     //   },
+  //     //   {
+  //     //     update: {
+  //     //       $set: { is_used: true, username: data.user },
+  //     //     },
+  //     //   },
+  //     // );
+  //   }
+  // }
+
+  // // 更新旧有网络类型数据
+  // const res1 = await NetworkTypesModel.findAndModify(
+  //   {
+  //     network_name: origin?.network_type,
+  //   },
+  //   {
+  //     update: {
+  //       $set: {
+  //         unused_number: await IpAddressModel.countDocuments({
+  //           network_type: origin?.network_type,
+  //           is_used: false,
+  //         }),
+  //         used_number: await IpAddressModel.countDocuments({
+  //           network_type: origin?.network_type,
+  //           is_used: true,
+  //         }),
+  //       },
+  //     },
+  //   },
+  // );
+
+  // // 更新现有的网络类型数据
+  // const res2 = await NetworkTypesModel.findAndModify(
+  //   {
+  //     network_name: data.network_type,
+  //   },
+  //   {
+  //     update: {
+  //       $set: {
+  //         unused_number: await IpAddressModel.countDocuments({
+  //           network_type: data.network_type,
+  //           is_used: false,
+  //         }),
+  //         used_number: await IpAddressModel.countDocuments({
+  //           network_type: data.network_type,
+  //           is_used: true,
+  //         }),
+  //       },
+  //     },
+  //   },
+  // );
 
   const res = await DevicesModel.findAndModify(
-    { _id: data._id },
+    { _id: objectIdId },
     {
       update: {
         $set: data,
@@ -294,5 +415,25 @@ export const modify_device = async (
     },
   );
 
-  return successRes(res);
+  const [before_update, after_update] = whereWasChanged(
+    data,
+    origin || {},
+    deviceSchemaMap,
+  );
+
+  const log: Partial<LogSchema> = {
+    who: client.addr.hostname,
+    for_who: data.mac || "",
+    event: LOGS_EVENT.UPDATE,
+    before_update,
+    after_update,
+  };
+
+  return res
+    ? (
+      successRes(res), create_log({ ...log, state: true })
+    )
+    : (
+      faildRes(ErrCode.UPDATE_ERROR), create_log({ ...log, state: false })
+    );
 };

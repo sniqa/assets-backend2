@@ -20,6 +20,10 @@ export const ws = async ({ port = 8080 }: WsConfig, callback: WsHandler) => {
     port,
   });
 
+  if (listener) {
+    console.log(`The WebSocket Server run at ${port}`);
+  }
+
   for await (const conn of listener) {
     handle(conn, callback);
   }
