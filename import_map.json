@@ -1,15 +1,16 @@
 {
-  "imports": {
-    "oak": "https://deno.land/x/oak/mod.ts",
-    "cors": "https://deno.land/x/oak_cors@v0.1.1/mod.ts",
-    "mongodb": "https://deno.land/x/mongo@v0.31.0/mod.ts",
-    "mongodb/types": "https://deno.land/x/mongo@v0.31.0/src/types.ts",
-    "asserts": "https://deno.land/std@0.160.0/testing/asserts.ts",
-    "utils": "./src/utils/mod.ts",
-    "mongo": "./src/mongo/mod.ts",
-    "curd": "./src/curd/mod.ts",
-    "controllers/": "./src/controllers/",
-    "ws": "./src/ws.ts",
-    "jsonDispatch": "./src/jsonDispatch.ts"
-  }
+	"imports": {
+		"oak": "https://deno.land/x/oak/mod.ts",
+		"cors": "https://deno.land/x/oak_cors@v0.1.1/mod.ts",
+		"mongodb": "https://deno.land/x/mongo@v0.31.0/mod.ts",
+		"mongodb/types": "https://deno.land/x/mongo@v0.31.0/src/types.ts",
+		"asserts": "https://deno.land/std@0.160.0/testing/asserts.ts",
+		"utils": "./src/utils/mod.ts",
+		"mongo": "./src/mongo/mod.ts",
+		"curd": "./src/curd/mod.ts",
+		"controllers/": "./src/controllers/",
+		"ws": "./src/ws.ts",
+		"http": "./src/http.ts",
+		"jsonDispatch": "./src/jsonDispatch.ts"
+	}
 }

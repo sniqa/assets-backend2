@@ -1,56 +1,49 @@
-export { Collection, MongoClient, ObjectId } from "mongodb";
-export type { UpdateFilter } from "mongodb/types";
-
+export { Collection, MongoClient, ObjectId } from 'mongodb'
+export type { UpdateFilter } from 'mongodb/types'
 export {
-  DepartmentModel,
-  DeviceBaseModel,
-  DevicesModel,
-  IpAddressModel,
-  LogsModel,
-  NetworkTypesModel,
-  UsbKeyModel,
-  UsersModel,
-} from "./connect.ts";
-
+	DepartmentModel,
+	DeviceBaseModel,
+	DevicesModel,
+	IpAddressModel,
+	LogsModel,
+	NetworkTypesModel,
+	UsbKeyModel,
+	UsersModel,
+} from './connect.ts'
 export {
-  DEVICE_BASE_COLLECTION_NAME,
-  type DeviceBaseSchema,
-  deviceBaseSchemaMap,
-} from "./device/devices_base.ts";
-
+	deviceSchemaMap,
+	DEVICE_COLLECTION_NAME,
+	type DeviceSchema,
+} from './device/devices.ts'
 export {
-  DEVICE_COLLECTION_NAME,
-  type DeviceSchema,
-  deviceSchemaMap,
-} from "./device/devices.ts";
-
+	deviceBaseSchemaMap,
+	DEVICE_BASE_COLLECTION_NAME,
+	type DeviceBaseSchema,
+} from './device/devices_base.ts'
 export {
-  initialLogInfo,
-  LOGS_COLLECTION_NAME,
-  LOGS_EVENT,
-  LOGS_TYPE,
-  type LogSchema,
-} from "./log/logs.ts";
-
+	usbKeysSchemaMap,
+	USB_KEYS_COLLECTION_NAME,
+	type UsbKeysSchema,
+} from './device/usb_keys.ts'
 export {
-  IP_ADDRESS_COLLECTION_NAME,
-  type IpAddressSchema,
-} from "./network/ip_addresses.ts";
-
+	initialLogInfo,
+	LOGS_COLLECTION_NAME,
+	LOGS_EVENT,
+	LOGS_TYPE,
+	type LogSchema,
+} from './log/logs.ts'
 export {
-  NETWORK_TYPES_COLLECTION_NAME,
-  type NetworkTypeSchema,
-} from "./network/network_types.ts";
-
+	ipAddressMap,
+	IP_ADDRESS_COLLECTION_NAME,
+	type IpAddressSchema,
+} from './network/ip_addresses.ts'
 export {
-  DEPARTMENT_COLLECTION_NAME,
-  departmentMap,
-  type DepartmentSchema,
-} from "./staff/departments.ts";
-export { USERS_COLLECTION_NAME, type UserSchema } from "./staff/users.ts";
-
+	NETWORK_TYPES_COLLECTION_NAME,
+	type NetworkTypeSchema,
+} from './network/network_types.ts'
 export {
-  USB_KEYS_COLLECTION_NAME,
-  type UsbKeysSchema,
-  usbKeysSchemaMap,
-} from "./device/usb_keys.ts";
+	departmentMap,
+	DEPARTMENT_COLLECTION_NAME,
+	type DepartmentSchema,
+} from './staff/departments.ts'
+export { USERS_COLLECTION_NAME, type UserSchema } from './staff/users.ts'
