@@ -82,11 +82,11 @@ export const find_users = async (
   filter: Partial<UserSchema>,
   defaultPage = defaultPageLength,
 ) => {
-  const { page, length } = defaultPage;
+  // const { page, length } = defaultPage;
 
   const res = await UsersModel.find(filter, {
-    skip: page * length,
-    limit: length,
+    // skip: page * length,
+    // limit: length,
   }).toArray();
 
   return successRes(res);

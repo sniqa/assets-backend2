@@ -7,6 +7,7 @@ export interface DeviceSchema {
   user: string;
   location: string;
   network_type: string;
+  network_name: string;
   ip_address: string;
   mac: string;
   device_model: string;
@@ -20,6 +21,7 @@ export const deviceSchemaMap: Omit<DeviceSchema, "_id"> = {
   user: "使用人",
   location: "物理位置",
   network_type: "网络类型",
+  network_name: "网络名称",
   ip_address: "IP地址",
   mac: "MAC",
   device_model: "设备型号",

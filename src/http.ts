@@ -1,31 +1,31 @@
-import { CORS } from 'cors'
-import { Application, Router } from 'oak'
+import { CORS } from "cors";
+import { Application, Router } from "oak";
 
 interface HttpServerConfig {
-	port: number
+  port: number;
 }
 
 export const httpServer = ({ port }: HttpServerConfig) => {
-	const app = new Application()
+  const app = new Application();
 
-	const router = new Router()
+  const router = new Router();
 
-	router.get('/', () => 'hello world')
+  router.get("/", () => "hello world");
 
-	app.use(
-		CORS({
-			origin: '*',
-			credentials: true,
-		})
-	)
+  app.use(
+    CORS({
+      origin: "*",
+      credentials: true,
+    }),
+  );
 
-	app.use(router.routes())
+  app.use(router.routes());
 
-	app.use(router.allowedMethods())
+  app.use(router.allowedMethods());
 
-	app.listen({ port })
+  app.listen({ port });
 
-	console.log(`server run at localhost:${port}`)
+  console.log(`server run at localhost:${port}`);
 
-	return router
-}
+  return router;
+};

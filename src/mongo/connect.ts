@@ -8,11 +8,19 @@ import {
   DeviceSchema,
   IP_ADDRESS_COLLECTION_NAME,
   IpAddressSchema,
+  JOB_ASSIGNMENT_NAME,
+  JobAssignmentSchema,
   LOGS_COLLECTION_NAME,
   LogSchema,
   MongoClient,
   NETWORK_TYPES_COLLECTION_NAME,
   NetworkTypeSchema,
+  TOPOLOGY_COLLECTION_NAME,
+  TOPOLOGY_DETAIL_COLLECTION_NAME,
+  TOPOLOGY_HISTORY_COLLECTION_NAME,
+  TopologyDetailSchema,
+  TopologyHistorySchema,
+  TopologySchema,
   USB_KEYS_COLLECTION_NAME,
   UsbKeysSchema,
   USERS_COLLECTION_NAME,
@@ -58,4 +66,20 @@ export const DepartmentModel = db.collection<DepartmentSchema>(
 // 数字证书集合
 export const UsbKeyModel = db.collection<UsbKeysSchema>(
   USB_KEYS_COLLECTION_NAME,
+);
+
+// 拓扑图集合
+export const TopologyModel = db.collection<TopologySchema>(
+  TOPOLOGY_COLLECTION_NAME,
+);
+export const TopologyDetailModel = db.collection<TopologyDetailSchema>(
+  TOPOLOGY_DETAIL_COLLECTION_NAME,
+);
+export const TopologyHistoryModel = db.collection<TopologyHistorySchema>(
+  TOPOLOGY_HISTORY_COLLECTION_NAME,
+);
+
+// 任务集合
+export const JobAssignmentModel = db.collection<JobAssignmentSchema>(
+  JOB_ASSIGNMENT_NAME,
 );
