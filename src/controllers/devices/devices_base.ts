@@ -1,5 +1,5 @@
 import { create_log, create_logs, LOGS_EVENT } from 'controllers/log/log.ts'
-import { create, find, remove } from 'curd'
+import { find, remove } from 'curd'
 import {
 	DeviceBaseModel,
 	DeviceBaseSchema,
@@ -12,23 +12,31 @@ import { ClientConfig } from 'ws'
 // 创建设备
 export const create_device_base = async (
 	client: ClientConfig,
-	data: Partial<DeviceBaseSchema>
+	query: Omit<DeviceBaseSchema, '_id'>
 ) => {
-	const res = await create({
-		collection: DeviceBaseModel,
-		query: data,
-		params_verify: ['device_model'],
+	if (!hasKeys(query, 'device_model', 'device_kind')) {
+		return faildRes(ErrCode.MISSING_PARAMETER)
+	}
+
+	const repeat = await DeviceBaseModel.findOne({
+		device_model: query.device_model,
 	})
+
+	if (repeat) {
+		return faildRes(ErrCode.REPEAT_DEVICE_BASE)
+	}
+
+	const res = await DeviceBaseModel.insertOne(query)
 
 	create_log({
 		who: client.addr.hostname,
-		for_who: data.device_model || '',
+		for_who: query.device_model || '',
 		event: LOGS_EVENT.CREATE,
-		state: res.success,
-		message: `创建${deviceBaseSchemaMap['device_model']}: ${data.device_model}`,
+		state: true,
+		message: `创建${deviceBaseSchemaMap['device_model']}: ${query.device_model}`,
 	})
 
-	return res
+	return successRes(res)
 }
 
 // 查找设备
@@ -86,7 +94,7 @@ export const modify_device_base = async (
 }
 
 // 删除
-export const delete_device_base = async (
+export const delete_device_bases = async (
 	client: ClientConfig,
 	ids: Array<string | number>
 ) => {
@@ -119,4 +127,28 @@ export const delete_device_base = async (
 	res.success && create_logs(r)
 
 	return successRes(res)
+}
+
+//删除单个设备
+export const delete_device_base = async (
+	client: ClientConfig,
+	query: Partial<DeviceBaseSchema>
+) => {
+	if (!hasKeys(query, '_id')) {
+		return faildRes(ErrCode.MISSING_PARAMETER)
+	}
+
+	const _id = new ObjectId(query._id)
+
+	const res = await DeviceBaseModel.deleteOne({ _id })
+
+	create_log({
+		state: true,
+		who: client.addr.hostname,
+		event: LOGS_EVENT.DELETE,
+		for_who: query?.device_model || '',
+		message: `删除设备型号: ${query?.device_model || ''}`,
+	})
+
+	return res > 0 ? successRes(res) : faildRes(ErrCode.DELETE_DEVICE_BASE_ERROR)
 }
